@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Box, Button, TextField, Typography } from '@mui/material';
+import { Box, Button, TextField, Typography, Paper, InputAdornment } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import EmailIcon from '@mui/icons-material/Email';
+import LockIcon from '@mui/icons-material/Lock';
 
-function Login({ setIsLoggedIn }) {  // Accept setIsLoggedIn as a prop
+function Login({ setIsLoggedIn }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -25,11 +27,8 @@ function Login({ setIsLoggedIn }) {  // Accept setIsLoggedIn as a prop
       });
 
       const token = response.data.token;
-
-      // Store the token in localStorage
       localStorage.setItem('token', token);
 
-      // Decode the JWT to extract the role using the specific schema
       const parseJwt = (token) => {
         try {
           const base64Url = token.split('.')[1];
@@ -46,35 +45,38 @@ function Login({ setIsLoggedIn }) {  // Accept setIsLoggedIn as a prop
         }
       };
 
-      // Extract the role from the JWT using the Microsoft schema
       const decodedToken = parseJwt(token);
       const role = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
-
-      // Store the role in localStorage
       localStorage.setItem('role', role);
-
-      // Update the login state
       setIsLoggedIn(true);
-
-      // Redirect to the appropriate dashboard based on the role
-    
-        navigate('/dashboard');
-     
+      navigate('/dashboard');
     } catch (err) {
       setError('Login failed. Please try again.');
     }
   };
 
   return (
-    <Box sx={{ width: 300, margin: '100px auto', textAlign: 'center' }}>
-      <Typography variant="h4">Login</Typography>
-      {error && (
-        <Typography variant="body2" color="error" sx={{ mt: 2, mb: 2 }}>
-          {error}
-        </Typography>
-      )}
-      <form onSubmit={handleSubmit}>
-        <Box sx={{ mb: 2 }}>
+    <Box sx={{
+      height: '100vh',
+      background: 'linear-gradient(to right, #6a11cb, #2575fc)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center'
+    }}>
+      <Paper elevation={6} sx={{
+        padding: 4,
+        width: '100%',
+        maxWidth: 400,
+        textAlign: 'center',
+        borderRadius: '16px'
+      }}>
+        <Typography variant="h4" gutterBottom>Login</Typography>
+        {error && (
+          <Typography variant="body2" color="error" sx={{ mt: 2, mb: 2 }}>
+            {error}
+          </Typography>
+        )}
+        <form onSubmit={handleSubmit}>
           <TextField
             label="Email"
             variant="outlined"
@@ -82,9 +84,15 @@ function Login({ setIsLoggedIn }) {  // Accept setIsLoggedIn as a prop
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            sx={{ mb: 2 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <EmailIcon />
+                </InputAdornment>
+              ),
+            }}
           />
-        </Box>
-        <Box sx={{ mb: 2 }}>
           <TextField
             label="Password"
             type="password"
@@ -93,12 +101,20 @@ function Login({ setIsLoggedIn }) {  // Accept setIsLoggedIn as a prop
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            sx={{ mb: 2 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockIcon />
+                </InputAdornment>
+              ),
+            }}
           />
-        </Box>
-        <Button type="submit" variant="contained" color="primary" fullWidth>
-          Login
-        </Button>
-      </form>
+          <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
+            Login
+          </Button>
+        </form>
+      </Paper>
     </Box>
   );
 }

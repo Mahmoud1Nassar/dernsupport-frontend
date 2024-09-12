@@ -2,20 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Box, CssBaseline, Drawer, List, ListItem, ListItemIcon, ListItemText, Toolbar, Typography, Divider } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import ListIcon from '@mui/icons-material/List';
-import SettingsIcon from '@mui/icons-material/Settings';
+import SupportIcon from '@mui/icons-material/Support';
+import BuildIcon from '@mui/icons-material/Build';
+import ReceiptIcon from '@mui/icons-material/Receipt'; // Bill icon for Quotes
 import Appointment from './Appointment';
 import Quote from './Quote';
 import SupportRequest from './SupportRequest';
 import SparePart from './SparePart';
-import { parseJwt } from './Authenication/utils'; // Assuming you have a utility to parse the token
+import { parseJwt } from './Authenication/utils';
 
-const drawerWidth = 240;
+const drawerWidth = 240; // Sidebar width
 
 const Dashboard = () => {
   const [selectedComponent, setSelectedComponent] = useState('Home');
   const [role, setRole] = useState('');
 
-  // Get the role from the token when the component mounts
+  // Fetch user role from token
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -25,7 +27,7 @@ const Dashboard = () => {
     }
   }, []);
 
-  // Conditionally render the components based on the user's role
+  // Render based on selected component
   const renderComponent = () => {
     switch (selectedComponent) {
       case 'Appointments':
@@ -37,29 +39,41 @@ const Dashboard = () => {
       case 'Spare Parts':
         return <SparePart />;
       default:
-        return <Typography variant="h4">Welcome to the Dashboard</Typography>;
+        return <Appointment />;
     }
   };
 
-  // Conditionally render the menu items based on the user's role
+  // Menu items based on user role
   const renderMenuItems = () => {
     if (role === 'Admin') {
-      // Admin sees all items
       return ['Appointments', 'Quotes', 'Support Requests', 'Spare Parts'];
     } else if (role === 'Technician') {
-      // Technician sees Support Requests, Spare Parts, and Quotes
       return ['Support Requests', 'Spare Parts', 'Quotes'];
     } else if (role === 'Customer') {
-      // Customer sees Appointments, Support Requests, and Quotes
       return ['Appointments', 'Support Requests', 'Quotes'];
     } else {
-      // Default case, show nothing or a fallback
       return [];
     }
   };
 
+  // Icons for each menu item
+  const getIcon = (text) => {
+    switch (text) {
+      case 'Appointments':
+        return <ListIcon />;
+      case 'Quotes':
+        return <ReceiptIcon />;
+      case 'Support Requests':
+        return <SupportIcon />;
+      case 'Spare Parts':
+        return <BuildIcon />;
+      default:
+        return <HomeIcon />;
+    }
+  };
+
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f4f6f8' }}>
       <CssBaseline />
 
       {/* Sidebar Drawer */}
@@ -70,23 +84,29 @@ const Dashboard = () => {
           '& .MuiDrawer-paper': {
             width: drawerWidth,
             boxSizing: 'border-box',
+            backgroundColor: '#343a40', // Sidebar background color
+            color: '#ffffff', // Sidebar text color
+            marginTop: '64px', // Ensuring it stays under your existing navbar
           },
         }}
         variant="permanent"
         anchor="left"
       >
-        <Toolbar>
-          <Typography variant="h6" noWrap>
-            Dashboard
-          </Typography>
-        </Toolbar>
+        <Toolbar />
         <Divider />
         <List>
           {renderMenuItems().map((text) => (
-            <ListItem button key={text} onClick={() => setSelectedComponent(text)}>
-              <ListItemIcon>
-                {text === 'Home' ? <HomeIcon /> : text === 'Appointments' ? <ListIcon /> : <SettingsIcon />}
-              </ListItemIcon>
+            <ListItem
+              button
+              key={text}
+              onClick={() => setSelectedComponent(text)}
+              sx={{
+                '&:hover': {
+                  backgroundColor: '#495057',
+                },
+              }}
+            >
+              <ListItemIcon sx={{ color: 'white' }}>{getIcon(text)}</ListItemIcon>
               <ListItemText primary={text} />
             </ListItem>
           ))}
@@ -96,16 +116,24 @@ const Dashboard = () => {
       {/* Main Content Area */}
       <Box
         component="main"
-        sx={{ 
-          flexGrow: 1, 
-          bgcolor: 'background.default', 
-          p: 0,
-          ml: `150px`, // Left margin to avoid overlap with Drawer
-          width: 900, // Ensures content fits the remaining width
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          mt: 8, // Add margin-top to ensure content is below navbar
+          ml: 0,
+          width: '100%',
         }}
       >
-        <Toolbar />
-        {renderComponent()}
+        <Box
+          sx={{
+            p: 3,
+            backgroundColor: '#ffffff',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', // Light shadow
+          }}
+        >
+          {renderComponent()}
+        </Box>
       </Box>
     </Box>
   );

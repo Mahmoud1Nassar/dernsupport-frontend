@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { parseJwt } from './Authenication/utils';
-import { Table, TableBody, TableCell, TableHead, TableRow, Button, TextField, Container, Grid, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Box } from '@mui/material';
+import { Table, TableBody, TableCell, TableHead, TableRow, Button, TextField, Container, Grid, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Box, Paper } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { Typography } from '@mui/material';
 
 const Appointment = () => {
     const [appointments, setAppointments] = useState([]);
     const [newAppointment, setNewAppointment] = useState({ appointmentDate: '', location: '', userPhone: '' });
     const [role, setRole] = useState('');
     const [userId, setUserId] = useState('');
-    const [openDialog, setOpenDialog] = useState(false); // State for pop-up form
+    const [openDialog, setOpenDialog] = useState(false);
 
     // Function to fetch appointments based on role
     const fetchAppointments = async () => {
-        console.log('Fetching appointments...'); // Add logging to trace the fetch
         const token = localStorage.getItem('token');
         const decodedToken = parseJwt(token);
 
@@ -21,7 +21,7 @@ const Appointment = () => {
             const userRole = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
             setRole(userRole);
             const currentUserId = decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'];
-            setUserId(currentUserId);  // Use the actual UserId
+            setUserId(currentUserId);
 
             try {
                 const response = await axios.get(`${process.env.REACT_APP_API_URL}/Appointment`, {
@@ -29,14 +29,10 @@ const Appointment = () => {
                 });
 
                 if (userRole === 'Admin') {
-                    // Admin fetches all appointments
                     setAppointments(response.data);
-                    console.log('Appointments fetched for Admin:', response.data);
                 } else if (userRole === 'Customer') {
-                    // Customer fetches only their own appointments by filtering with userId
                     const customerAppointments = response.data.filter(app => app.userId === currentUserId);
                     setAppointments(customerAppointments);
-                    console.log('Appointments fetched for Customer:', customerAppointments);
                 }
             } catch (error) {
                 console.error('Error fetching appointments:', error);
@@ -44,13 +40,10 @@ const Appointment = () => {
         }
     };
 
-    // Ensure the function is called when the component mounts
     useEffect(() => {
-        console.log('Component mounted, fetching appointments...');
         fetchAppointments();
-    }, []);  // Only run once when the component mounts
+    }, []);
 
-    // Function to handle appointment creation
     const handleCreateAppointment = async () => {
         const token = localStorage.getItem('token');
         const decodedToken = parseJwt(token);
@@ -71,23 +64,21 @@ const Appointment = () => {
                     }
                 }
             );
-            // Clear the input fields after successful creation
             setNewAppointment({ appointmentDate: '', location: '', userPhone: '' });
-            setOpenDialog(false); // Close the pop-up after creation
-            fetchAppointments(); // Fetch updated appointments
+            setOpenDialog(false);
+            fetchAppointments();
         } catch (error) {
             console.error('Error creating appointment:', error.response || error);
         }
     };
 
-    // Function to handle appointment deletion
     const handleDeleteAppointment = async (appointmentId) => {
         const token = localStorage.getItem('token');
         try {
             await axios.delete(`${process.env.REACT_APP_API_URL}/Appointment/${appointmentId}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            fetchAppointments(); // Fetch updated appointments after deletion
+            fetchAppointments();
         } catch (error) {
             console.error('Error deleting appointment:', error);
         }
@@ -96,51 +87,49 @@ const Appointment = () => {
     return (
         <Container>
             <Grid container spacing={3}>
-                {/* Adjust margin-top to reduce space above heading */}
-                <Grid item xs={12} style={{ marginTop: '20px' }}>
-                    <h1>Appointments</h1>
-                    {/* Adding scrollable table container */}
-                    <Box sx={{ maxHeight: '280px', overflowY: 'auto', width: '100%' }}>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>ID</TableCell>
-                                    <TableCell>Date</TableCell>
-                                    <TableCell>Location</TableCell>
-                                    {role === 'Admin' && <TableCell>User Name</TableCell>}
-                                    {role === 'Admin' && <TableCell>Actions</TableCell>}
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {appointments.map((appointment) => (
-                                    <TableRow key={appointment.appointmentId}>
-                                        <TableCell>{appointment.appointmentId}</TableCell>
-                                        <TableCell>{appointment.appointmentDate.split('T')[0]}</TableCell> {/* Shows year-month-day */}
-                                        <TableCell>{appointment.location}</TableCell>
-                                        {role === 'Admin' && <TableCell>{appointment.userName}</TableCell>}
-                                        {role === 'Admin' && (
-                                            <TableCell>
-                                                <IconButton color="secondary" onClick={() => handleDeleteAppointment(appointment.appointmentId)}>
-                                                    <DeleteIcon style={{ color: 'red' }} />
-                                                </IconButton>
-                                            </TableCell>
-                                        )}
+                <Grid item xs={12}>
+                    <Typography variant="h4" gutterBottom>
+                        Appointments
+                    </Typography>
+
+                    {/* Scrollable table with better spacing */}
+                    <Paper elevation={3} sx={{ padding: 2 }}>
+                        <Box sx={{ maxHeight: '400px', overflowY: 'auto' }}>
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>ID</TableCell>
+                                        <TableCell>Date</TableCell>
+                                        <TableCell>Location</TableCell>
+                                        {role === 'Admin' && <TableCell>User Name</TableCell>}
+                                        {role === 'Admin' && <TableCell>Actions</TableCell>}
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </Box>
+                                </TableHead>
+                                <TableBody>
+                                    {appointments.map((appointment) => (
+                                        <TableRow key={appointment.appointmentId}>
+                                            <TableCell>{appointment.appointmentId}</TableCell>
+                                            <TableCell>{appointment.appointmentDate.split('T')[0]}</TableCell>
+                                            <TableCell>{appointment.location}</TableCell>
+                                            {role === 'Admin' && <TableCell>{appointment.userName}</TableCell>}
+                                            {role === 'Admin' && (
+                                                <TableCell>
+                                                    <IconButton color="secondary" onClick={() => handleDeleteAppointment(appointment.appointmentId)}>
+                                                        <DeleteIcon sx={{ color: 'red' }} />
+                                                    </IconButton>
+                                                </TableCell>
+                                            )}
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </Box>
+                    </Paper>
                 </Grid>
 
-                {/* Create button below the table */}
                 {(role === 'Admin' || role === 'Customer') && (
-                    <Grid item xs={12} style={{ textAlign: 'right', marginTop: '20px' }}>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            style={{ marginBottom: '20px', position: 'relative', zIndex: 1 }} // Ensure button stays visible
-                            onClick={() => setOpenDialog(true)}
-                        >
+                    <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                        <Button variant="contained" color="primary" onClick={() => setOpenDialog(true)}>
                             Create Appointment
                         </Button>
                     </Grid>
